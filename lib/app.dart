@@ -1,19 +1,32 @@
-import 'package:appwrite_flutter_starter_kit/home.dart';
 import 'package:flutter/material.dart';
+import 'ui/screens/splash_screen.dart';
+import 'ui/theme/app_theme.dart';
+import 'ui/screens/home/home_screen.dart';
+import 'ui/screens/home/add_laptop_screen.dart';
+import 'ui/screens/home/add_task_screen.dart';
+import 'ui/screens/home/add_reminder_screen.dart';
+import 'ui/screens/auth/login_screen.dart';
 
-class AppwriteApp extends StatelessWidget {
-  const AppwriteApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Appwrite StarterKit',
+      title: 'LaptopCare',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const AppwriteStarterKit(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/add_laptop': (context) => const AddLaptopScreen(),
+        '/add_task': (context) => const AddTaskScreen(),
+        '/add_reminder': (context) => const AddReminderScreen(),
+      },
     );
   }
 }

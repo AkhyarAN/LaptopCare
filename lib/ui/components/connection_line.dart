@@ -52,7 +52,7 @@ class AnimatedSideline extends StatelessWidget {
         return Align(
           alignment: !left ? Alignment.centerLeft : Alignment.centerRight,
           child: AnimatedContainer(
-            duration: Duration(milliseconds: 750),
+            duration: const Duration(milliseconds: 750),
             width: show ? constraints.maxWidth : 0,
             child: SizedBox(
               height: 1.5,
@@ -91,7 +91,7 @@ class AnimatedCheckmark extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedOpacity(
       opacity: show ? 1.0 : 0.0,
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
       child: Container(
         width: 30,
         height: 30,

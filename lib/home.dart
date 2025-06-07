@@ -1,12 +1,12 @@
-import 'package:appwrite_flutter_starter_kit/data/models/log.dart';
-import 'package:appwrite_flutter_starter_kit/data/models/status.dart';
-import 'package:appwrite_flutter_starter_kit/data/repository/appwrite_repository.dart';
-import 'package:appwrite_flutter_starter_kit/ui/components/checkered_background.dart';
-import 'package:appwrite_flutter_starter_kit/ui/components/collapsible_bottomsheet.dart';
-import 'package:appwrite_flutter_starter_kit/ui/components/connection_status_view.dart';
-import 'package:appwrite_flutter_starter_kit/ui/components/getting_started_cards.dart';
-import 'package:appwrite_flutter_starter_kit/ui/components/top_platform_view.dart';
-import 'package:appwrite_flutter_starter_kit/utils/extensions/build_context.dart';
+import 'package:laptop_care/data/models/log.dart';
+import 'package:laptop_care/data/models/status.dart';
+import 'package:laptop_care/data/repository/appwrite_repository.dart';
+import 'package:laptop_care/ui/components/checkered_background.dart';
+import 'package:laptop_care/ui/components/collapsible_bottomsheet.dart';
+import 'package:laptop_care/ui/components/connection_status_view.dart';
+import 'package:laptop_care/ui/components/getting_started_cards.dart';
+import 'package:laptop_care/ui/components/top_platform_view.dart';
+import 'package:laptop_care/utils/extensions/build_context.dart';
 import 'package:flutter/material.dart';
 
 class AppwriteStarterKit extends StatefulWidget {
@@ -58,7 +58,7 @@ class _AppwriteStarterKit extends State<AppwriteStarterKit> {
                         );
                       },
                     ),
-                    GettingStartedCards()
+                    const GettingStartedCards()
                   ],
                 ),
               ),

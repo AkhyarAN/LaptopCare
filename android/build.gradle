@@ -3,6 +3,11 @@ allprojects {
         google()
         mavenCentral()
     }
+    
+    // Exclude the problematic flutter_web_auth_2 plugin
+    configurations.all {
+        exclude group: 'com.linusu.flutter_web_auth_2', module: 'flutter_web_auth_2'
+    }
 }
 
 rootProject.buildDir = "../build"

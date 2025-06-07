@@ -1,0 +1,22 @@
+name: flutter_web_auth_2
+description: Override package to fix compatibility issues with flutter_web_auth_2
+version: 2.2.1
+
+environment:
+  sdk: ">=2.12.0 <4.0.0"
+  flutter: ">=2.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_auth_2_platform_interface: ^2.1.4
+  url_launcher: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.linusu.flutter_web_auth_2
+        pluginClass: FlutterWebAuth2Plugin
+      ios:
+        pluginClass: FlutterWebAuth2Plugin 

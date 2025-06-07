@@ -49,14 +49,14 @@ class ConnectionStatusView extends StatelessWidget {
                 minimumSize: const Size(0, 32),
                 elevation: 0,
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
+              child: const Padding(
+                padding: EdgeInsets.symmetric(
                   vertical: 10,
                   horizontal: 6,
                 ),
                 child: Text(
                   "Send a ping",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
@@ -90,8 +90,8 @@ class ConnectionStatusView extends StatelessWidget {
     return Row(
       key: const ValueKey(Status.loading),
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const SizedBox(
+      children: const [
+        SizedBox(
           width: 20,
           height: 20,
           child: CircularProgressIndicator(
@@ -99,8 +99,8 @@ class ConnectionStatusView extends StatelessWidget {
             color: Colors.grey,
           ),
         ),
-        const SizedBox(width: 16),
-        const Text(
+        SizedBox(width: 16),
+        Text(
           "Waiting for connection...",
           style: TextStyle(
             fontSize: 14,

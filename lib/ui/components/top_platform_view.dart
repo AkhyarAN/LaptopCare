@@ -60,11 +60,11 @@ class PlatformIcon extends StatelessWidget {
         color: const Color(0xFFFAFAFD),
         borderRadius: BorderRadius.circular(context.isExtraWideScreen ? size * 0.2 : 24),
         border: Border.all(color: const Color(0x0A19191C), width: 1),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0x08000000),
+            color: Color(0x08000000),
             blurRadius: 9.36,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -72,21 +72,21 @@ class PlatformIcon extends StatelessWidget {
         child: Container(
           width: size * 0.86,
           height: size * 0.86,
-          margin: context.isExtraWideScreen ? EdgeInsets.all(8) : null,
+          margin: context.isExtraWideScreen ? const EdgeInsets.all(8) : null,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(context.isExtraWideScreen ? size * 0.2: 16),
             border: Border.all(color: const Color(0xFFFAFAFB), width: 1),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: const Color(0x05000000),
+                color: Color(0x05000000),
                 blurRadius: 8,
-                offset: const Offset(0, 2),
+                offset: Offset(0, 2),
               ),
               BoxShadow(
-                color: const Color(0x05000000),
+                color: Color(0x05000000),
                 blurRadius: 12,
-                offset: const Offset(0, 3),
+                offset: Offset(0, 3),
               ),
             ],
           ),

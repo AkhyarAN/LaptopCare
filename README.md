@@ -1,50 +1,146 @@
-# Flutter Starter Kit with Appwrite
+# LaptopCare - Aplikasi Pemeliharaan Laptop
 
-Kickstart your Flutter development with this ready-to-use starter project integrated
-with [Appwrite](https://appwrite.io).
+Aplikasi Flutter untuk membantu pengguna melacak dan mengelola pemeliharaan laptop mereka.
 
-This guide will help you quickly set up, customize, and build your Flutter app.
+## Fitur
 
----
+- Manajemen beberapa laptop
+- Penjadwalan tugas pemeliharaan
+- Pengingat pemeliharaan
+- Pelacakan riwayat pemeliharaan
+- Panduan pemeliharaan
 
-## 🚀 Getting Started
+## Persyaratan
 
-### Clone the Project
+- Flutter SDK
+- Appwrite Backend
 
-Clone this repository to your local machine using Git or directly from `Android Studio`:
+## Konfigurasi Appwrite
 
-```bash
-git clone https://github.com/appwrite/starter-for-flutter
-```
+Aplikasi ini menggunakan Appwrite sebagai backend. Anda dapat mengatur koleksi database Appwrite secara otomatis menggunakan script yang disediakan.
 
-Alternatively, open the repository URL in `Android Studio` to clone it directly.
+### Mengatur Appwrite Backend secara Manual
 
----
+1. Buat project di [Appwrite Console](https://cloud.appwrite.io/)
+2. Buat database dengan ID `laptopcare-db`
+3. Buat koleksi-koleksi berikut:
+   - `users`
+   - `laptops`
+   - `maintenance_tasks`
+   - `maintenance_history`
+   - `reminders`
+4. Buat bucket storage dengan ID `laptopcare-storage`
 
-## 🛠️ Development Guide
+### Mengatur Appwrite Backend secara Otomatis
 
-1. **Configure Appwrite**  
-   Navigate to `lib/data/repository/appwrite_repository.dart` and update the values to match your
-   Appwrite project credentials.
+Anda dapat menggunakan script yang disediakan untuk membuat semua koleksi dan atribut yang diperlukan secara otomatis.
 
-2. **Customize as Needed**  
-   Modify the starter kit to suit your app's requirements. Adjust UI, features, or backend
-   integrations as per your needs.
+#### Untuk pengguna Linux/macOS:
 
-3. **Run the App**  
-   Select a target device (emulator or a connected physical device) in `Android Studio`, and
-   click **Run** to start the app.
+1. Buat project di [Appwrite Console](https://cloud.appwrite.io/) dengan ID `task-management-app`
+2. Dapatkan API key dengan izin yang sesuai (minimal izin untuk database dan storage)
+3. Buka terminal dan navigasikan ke direktori project
+4. Berikan izin eksekusi pada script:
+   ```bash
+   chmod +x appwrite_setup.sh
+   ```
+5. Jalankan script:
+   ```bash
+   ./appwrite_setup.sh
+   ```
 
----
+#### Untuk pengguna Windows:
 
-## 📦 Building for Production
+1. Buat project di [Appwrite Console](https://cloud.appwrite.io/) dengan ID `task-management-app`
+2. Dapatkan API key dengan izin yang sesuai (minimal izin untuk database dan storage)
+3. Buka PowerShell dan navigasikan ke direktori project
+4. Jalankan script:
+   ```powershell
+   .\appwrite_setup.ps1
+   ```
 
-Follow the official Flutter guide on deploying an app to
-production : https://docs.flutter.dev/deployment
+Script akan:
+- Menginstal Appwrite CLI jika belum terinstal
+- Login ke Appwrite menggunakan API key yang disediakan
+- Membuat database `laptopcare-db`
+- Membuat semua koleksi yang diperlukan dengan atribut yang sesuai
+- Membuat bucket storage
 
----
+## Menjalankan Aplikasi
 
-## 💡 Additional Notes
+1. Clone repository
+2. Instal dependensi:
+   ```bash
+   flutter pub get
+   ```
+3. Jalankan aplikasi:
+   ```bash
+   flutter run
+   ```
 
-- This starter project is designed to streamline your Android development with Appwrite.
-- Refer to the [Appwrite Documentation](https://appwrite.io/docs) for detailed integration guidance.
+## Struktur Koleksi Database
+
+### Koleksi Users
+- `user_id` (String): ID pengguna
+- `email` (String): Email pengguna
+- `name` (String): Nama pengguna
+- `theme` (String): Tema UI yang dipilih
+- `notifications_enabled` (Boolean): Status notifikasi
+- `created_at` (DateTime): Waktu pembuatan akun
+- `last_login` (DateTime): Waktu login terakhir
+
+### Koleksi Laptops
+- `laptop_id` (String): ID laptop
+- `user_id` (String): ID pemilik laptop
+- `name` (String): Nama laptop
+- `brand` (String): Merek laptop
+- `model` (String): Model laptop
+- `os` (String): Sistem operasi
+- `ram` (String): Kapasitas RAM
+- `storage` (String): Kapasitas penyimpanan
+- `cpu` (String): Prosesor
+- `gpu` (String): Kartu grafis
+- `image_id` (String): ID gambar laptop
+- `purchase_date` (String): Tanggal pembelian
+- `created_at` (DateTime): Waktu penambahan laptop
+- `updated_at` (DateTime): Waktu pembaruan terakhir
+
+### Koleksi Maintenance Tasks
+- `task_id` (String): ID tugas
+- `user_id` (String): ID pemilik tugas
+- `laptop_id` (String): ID laptop terkait
+- `title` (String): Judul tugas
+- `description` (String): Deskripsi tugas
+- `category` (String): Kategori tugas (physical, software, security, performance)
+- `frequency` (String): Frekuensi tugas (daily, weekly, monthly, quarterly)
+- `priority` (String): Prioritas tugas (low, medium, high)
+- `created_at` (DateTime): Waktu pembuatan tugas
+- `updated_at` (DateTime): Waktu pembaruan terakhir
+
+### Koleksi Maintenance History
+- `history_id` (String): ID riwayat
+- `user_id` (String): ID pengguna
+- `laptop_id` (String): ID laptop
+- `task_id` (String): ID tugas
+- `completion_date` (DateTime): Tanggal penyelesaian
+- `notes` (String): Catatan
+- `created_at` (DateTime): Waktu pencatatan
+
+### Koleksi Reminders
+- `reminder_id` (String): ID pengingat
+- `user_id` (String): ID pengguna
+- `laptop_id` (String): ID laptop
+- `task_id` (String): ID tugas
+- `status` (String): Status pengingat (pending, completed, dismissed)
+- `frequency` (String): Frekuensi pengingat
+- `scheduled_date` (DateTime): Tanggal terjadwal
+- `created_at` (DateTime): Waktu pembuatan
+- `updated_at` (DateTime): Waktu pembaruan terakhir
+
+## Kontribusi
+
+Kontribusi selalu diterima! Silakan buat pull request atau buka issue untuk saran dan perbaikan.
+
+## Lisensi
+
+Proyek ini dilisensikan di bawah Lisensi MIT.

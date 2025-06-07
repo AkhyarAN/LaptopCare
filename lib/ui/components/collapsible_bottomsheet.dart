@@ -143,7 +143,7 @@ class LogsBottomSheet extends StatelessWidget {
                 ? const EmptyLogsSection()
                 : Column(
                     children: [
-                      LogsTableHeader(),
+                      const LogsTableHeader(),
                       ListView.builder(
                         shrinkWrap: true,
                         itemCount: logs.length,
@@ -167,7 +167,7 @@ class LogsBottomSheet extends StatelessWidget {
                 flex: 1,
                 child: ProjectSection(projectInfo: projectInfo),
               ),
-              VerticalDivider(
+              const VerticalDivider(
                 width: 1,
                 thickness: 1,
                 color: Color(0xFFEDEDF0),
@@ -175,10 +175,10 @@ class LogsBottomSheet extends StatelessWidget {
               Expanded(
                 flex: 2,
                 child: logs.isEmpty
-                    ? EmptyLogsSection()
+                    ? const EmptyLogsSection()
                     : Column(
                         children: [
-                          LogsTableHeader(),
+                          const LogsTableHeader(),
                           Expanded(
                             child: ListView.builder(
                               itemCount: logs.length,
@@ -393,7 +393,7 @@ class LogsTableRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(top: 16, left: 16, bottom: 8),
+          padding: const EdgeInsets.only(top: 16, left: 16, bottom: 8),
           child: needsScroll
               ? SingleChildScrollView(
                   scrollDirection: Axis.horizontal,

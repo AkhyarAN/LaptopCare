@@ -31,8 +31,42 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    packagingOptions {
+        exclude 'META-INF/proguard/androidx-annotations.pro'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/*.kotlin_module'
+    }
+    
+    // Exclude the problematic flutter_web_auth_2 plugin
+    configurations {
+        all*.exclude group: 'io.flutter.plugins.flutter_web_auth_2'
+        all*.exclude module: 'flutter_web_auth_2'
+    }
+}
+
+dependencies {
+    // Force the use of the latest browser library that's compatible with the latest Kotlin version
+    implementation "androidx.browser:browser:1.5.0"
+    
+    // These dependencies help fix the flutter_web_auth_2 issue by forcing newer versions
+    implementation "androidx.core:core:1.10.0"
+    implementation "androidx.annotation:annotation:1.7.0"
+    implementation "androidx.activity:activity:1.8.0"
+    implementation "androidx.fragment:fragment:1.6.0"
 }
 
 flutter {

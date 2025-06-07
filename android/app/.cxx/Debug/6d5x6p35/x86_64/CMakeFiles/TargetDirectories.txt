@@ -1,0 +1,2 @@
+F:/Semester 6/Pemrograman Mobile/uas/starter-for-flutter/android/app/.cxx/Debug/6d5x6p35/x86_64/CMakeFiles/edit_cache.dir
+F:/Semester 6/Pemrograman Mobile/uas/starter-for-flutter/android/app/.cxx/Debug/6d5x6p35/x86_64/CMakeFiles/rebuild_cache.dir

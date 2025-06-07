@@ -30,7 +30,7 @@ class CheckeredBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final double gridSize = min(size.width * 0.1, 64);
-    final double lineThickness = 0.75;
+    const double lineThickness = 0.75;
     final double heightConstraint = size.height * heightConstraintFactor;
     final Paint linePaint = Paint()
       ..color = Colors.grey.applyOpacity(0.3)
