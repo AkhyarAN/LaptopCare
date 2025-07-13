@@ -1,3 +1,8 @@
+Nama  : Akhyar Nurullah
+NIM   : 221240001339
+Kelas : DB
+
+
 # LaptopCare - Aplikasi Pemeliharaan Laptop
 
 Aplikasi Flutter untuk membantu pengguna melacak dan mengelola pemeliharaan laptop mereka.
@@ -214,10 +219,3 @@ Tab "Statistik" menyediakan:
 - `created_at` (DateTime): Waktu pembuatan
 - `updated_at` (DateTime): Waktu pembaruan terakhir
 
-## Kontribusi
-
-Kontribusi selalu diterima! Silakan buat pull request atau buka issue untuk saran dan perbaikan.
-
-## Lisensi
-
-Proyek ini dilisensikan di bawah Lisensi MIT.
