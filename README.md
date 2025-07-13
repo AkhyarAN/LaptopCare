@@ -5,7 +5,7 @@ Kelas : DB
 
 # LaptopCare - Aplikasi Pemeliharaan Laptop
 
-Aplikasi Flutter untuk membantu pengguna melacak dan mengelola pemeliharaan laptop mereka.
+Aplikasi Flutter untuk membantu pengguna melacak dan mengelola pemeliharaan laptop.
 
 ## Fitur
 
