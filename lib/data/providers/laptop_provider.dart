@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../services/appwrite_service.dart';
 import '../models/laptop.dart';
@@ -16,16 +17,26 @@ class LaptopProvider with ChangeNotifier {
   Laptop? get selectedLaptop => _selectedLaptop;
 
   Future<void> fetchLaptops(String userId) async {
+    // Prevent multiple concurrent fetches
+    if (_isLoading) {
+      debugPrint('LaptopProvider.fetchLaptops: Already loading, skipping');
+      return;
+    }
+
+    debugPrint('LaptopProvider.fetchLaptops: Loading data for user $userId');
     _setLoading(true);
     _clearError();
 
     try {
       _laptops = await _appwriteService.getLaptops(userId);
+      debugPrint(
+          'LaptopProvider.fetchLaptops: Loaded ${_laptops.length} laptops');
 
       if (_laptops.isNotEmpty && _selectedLaptop == null) {
         _selectedLaptop = _laptops.first;
       }
     } catch (e) {
+      debugPrint('LaptopProvider.fetchLaptops: Error - $e');
       _setError(e.toString());
     } finally {
       _setLoading(false);
@@ -47,13 +58,18 @@ class LaptopProvider with ChangeNotifier {
   }) async {
     debugPrint('LaptopProvider.createLaptop dipanggil');
     debugPrint('userId: $userId, name: $name');
+
+    // Set loading state
     _isLoading = true;
     _clearError();
     notifyListeners();
 
     try {
       debugPrint('Mencoba membuat laptop baru...');
-      final laptop = await _appwriteService.createLaptop(
+
+      // Add timeout untuk mencegah hanging
+      final laptop = await _appwriteService
+          .createLaptop(
         userId: userId,
         name: name,
         brand: brand,
@@ -65,24 +81,31 @@ class LaptopProvider with ChangeNotifier {
         cpu: cpu,
         gpu: gpu,
         imageId: imageId,
+      )
+          .timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception(
+              'Timeout: Proses menyimpan laptop terlalu lama. Periksa koneksi internet.');
+        },
       );
+
       debugPrint('Berhasil membuat laptop: ${laptop.laptopId}');
 
-      // Update the list without calling notifyListeners() here
+      // Update the list
       _laptops.add(laptop);
       _selectedLaptop = laptop;
 
-      _isLoading = false;
-      notifyListeners(); // Call only once at the end
       debugPrint('Laptop berhasil ditambahkan ke list');
-
       return true;
     } catch (e) {
       debugPrint('Error membuat laptop: $e');
       _error = e.toString();
-      _isLoading = false;
-      notifyListeners(); // Call only once at the end
       return false;
+    } finally {
+      // Pastikan loading state selalu di-reset
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -157,5 +180,25 @@ class LaptopProvider with ChangeNotifier {
 
   void _clearError() {
     _error = null;
+  }
+
+  /// Clear semua data laptop (untuk logout atau ganti user)
+  void clearData() {
+    debugPrint('LaptopProvider.clearData: Membersihkan semua data laptop');
+
+    // Only notify if there's actually data to clear
+    final hasData = _laptops.isNotEmpty ||
+        _selectedLaptop != null ||
+        _error != null ||
+        _isLoading;
+
+    _laptops.clear();
+    _selectedLaptop = null;
+    _error = null;
+    _isLoading = false;
+
+    if (hasData) {
+      notifyListeners();
+    }
   }
 }

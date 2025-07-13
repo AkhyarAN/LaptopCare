@@ -7,11 +7,12 @@ plugins {
 android {
     ndkVersion = "25.1.8937393"
     namespace = "io.appwrite.flutter"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
@@ -21,8 +22,8 @@ android {
     defaultConfig {
         applicationId = "io.appwrite.flutter"
 
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 21
+        targetSdk = 35
 
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -59,6 +60,9 @@ android {
 }
 
 dependencies {
+    // Core library desugaring for flutter_local_notifications
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    
     // Force the use of the latest browser library that's compatible with the latest Kotlin version
     implementation "androidx.browser:browser:1.5.0"
     

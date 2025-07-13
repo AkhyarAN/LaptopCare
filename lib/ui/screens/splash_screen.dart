@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../data/providers/auth_provider.dart';
-import '../../utils/appwrite_initializer.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,130 +8,188 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  bool _hasError = false;
-  String? _errorMessage;
+  bool _isNavigating = false;
+  String _statusText = 'Initializing...';
 
   @override
   void initState() {
     super.initState();
-    _initializeAppwrite();
-  }
 
-  Future<void> _initializeAppwrite() async {
-    try {
-      // Initialize Appwrite
-      await AppwriteInitializer.initialize(context);
-
-      // Check authentication status after a delay
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (!mounted) return;
-
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-      try {
-        // Try to check auth status
-        await authProvider.checkAuthStatus();
-
-        // Navigate based on authentication status
-        if (authProvider.isLoggedIn) {
-          Navigator.of(context).pushReplacementNamed('/home');
-        } else {
-          Navigator.of(context).pushReplacementNamed('/login');
-        }
-      } catch (e) {
-        // If there's an auth error, go to login screen
-        debugPrint('Auth status check error: $e');
-        Navigator.of(context).pushReplacementNamed('/login');
-      }
-    } catch (e) {
+    // Update status after a short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
-          _hasError = true;
-          _errorMessage = e.toString();
+          _statusText = 'Loading app data...';
         });
       }
+    });
+
+    // Update status again after another delay
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _statusText = 'Almost ready...';
+        });
+      }
+    });
+
+    // Auto-navigate to login after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted && !_isNavigating) {
+        _navigateToLogin();
+      }
+    });
+  }
+
+  void _navigateToLogin() {
+    if (mounted && !_isNavigating) {
+      setState(() {
+        _isNavigating = true;
+        _statusText = 'Navigating to login...';
+      });
+
+      debugPrint('📝 Navigating to login...');
+      Navigator.of(context).pushReplacementNamed('/login');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/splash-logo.png',
-              width: 150,
-              height: 150,
-              errorBuilder: (context, error, stackTrace) => const Icon(
-                Icons.laptop_mac,
-                size: 150,
-                color: Colors.blue,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'LaptopCare',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Maintain your laptop with ease',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 40),
-            if (_hasError)
-              Column(
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    color: Theme.of(context).colorScheme.error,
-                    size: 40,
+      backgroundColor: Theme.of(context).colorScheme.background,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // App Logo
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Error initializing app',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Icon(
+                    Icons.laptop_mac,
+                    size: 60,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
-                  const SizedBox(height: 5),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Text(
-                      _errorMessage ?? 'Unknown error',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                        fontSize: 12,
+                ),
+
+                const SizedBox(height: 32),
+
+                // App Name
+                Text(
+                  'LaptopCare',
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // App Tagline
+                Text(
+                  'Maintain your laptop with ease',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 48),
+
+                // Simple loading indicator
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).colorScheme.primary,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _hasError = false;
-                        _errorMessage = null;
-                      });
-                      _initializeAppwrite();
-                    },
-                    child: const Text('Retry'),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Status text
+                Text(
+                  _statusText,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Big, prominent login button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isNavigating ? null : _navigateToLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
+                    ),
+                    child: _isNavigating
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            'Go to Login',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
-                ],
-              )
-            else
-              const CircularProgressIndicator(),
-          ],
+                ),
+
+                const SizedBox(height: 16),
+
+                Text(
+                  'Or wait 3 seconds for auto-redirect',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withOpacity(0.7),
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 32),
+
+                // Version info
+                Text(
+                  'Version 1.0.0',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withOpacity(0.5),
+                      ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

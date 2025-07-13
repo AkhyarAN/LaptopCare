@@ -40,11 +40,23 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _testLogin() {
+    debugPrint('🧪 Test login pressed - navigating directly to home');
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Login'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -67,6 +79,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                           color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.bold,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Welcome back!',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -114,12 +134,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Error message
                   if (authProvider.error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16.0),
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.errorContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: Text(
                         authProvider.error!,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                          color: Theme.of(context).colorScheme.onErrorContainer,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -130,9 +155,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: authProvider.isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
                     ),
                     child: authProvider.isLoading
-                        ? const CircularProgressIndicator()
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
                         : const Text('Login'),
                   ),
                   const SizedBox(height: 16),
@@ -147,6 +182,56 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     child: const Text('Don\'t have an account? Register'),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Test mode section
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceVariant
+                          .withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withOpacity(0.2),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Development Mode',
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Skip login and test the app without authentication',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton(
+                          onPressed: _testLogin,
+                          child: const Text('Test Login (Skip Auth)'),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

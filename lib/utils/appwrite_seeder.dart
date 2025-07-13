@@ -12,6 +12,9 @@ class AppwriteSeeder {
   static const String usersCollectionId = 'users';
   static const String laptopsCollectionId = 'laptops';
   static const String tasksCollectionId = 'maintenance_tasks';
+  static const String guidesCollectionId = 'guides';
+  static const String remindersCollectionId = 'reminders';
+  static const String historyCollectionId = 'maintenance_history';
 
   static Future<void> runSeeder(BuildContext context) async {
     try {
@@ -211,6 +214,113 @@ class AppwriteSeeder {
         }
       } catch (e) {
         result += 'Error saat memeriksa collection maintenance_tasks: $e\n';
+      }
+
+      // Buat collection guides jika belum ada
+      result += 'Mencoba membuat collection guides...\n';
+      try {
+        // Cek apakah koleksi guides sudah ada
+        try {
+          await appwrite.databases.listDocuments(
+            databaseId: databaseId,
+            collectionId: guidesCollectionId,
+            queries: [Query.limit(1)],
+          );
+          result += 'Collection guides sudah ada, melanjutkan...\n';
+        } catch (e) {
+          if (e.toString().contains('Collection not found')) {
+            result +=
+                'Collection guides tidak ditemukan. Silakan buat collection melalui Appwrite Console.\n';
+            result += 'Nama collection: $guidesCollectionId\n';
+            result += 'Atribut yang diperlukan:\n';
+            result += '- guide_id (string, required)\n';
+            result += '- category (string, required)\n';
+            result += '- title (string, required)\n';
+            result += '- content (string, required)\n';
+            result += '- difficulty (string, required)\n';
+            result += '- estimated_time (integer, required)\n';
+            result += '- is_premium (boolean, required)\n';
+            result += '- created_at (string)\n';
+            result += '- updated_at (string)\n';
+            result += '\nPERMISSIONS PENTING untuk collection guides:\n';
+            result += '- Create: Any\n';
+            result += '- Read: Any\n';
+            result += '- Update: Any\n';
+            result += '- Delete: Any\n';
+          } else {
+            result += 'Error saat memeriksa collection guides: $e\n';
+          }
+        }
+      } catch (e) {
+        result += 'Error saat memeriksa collection guides: $e\n';
+      }
+
+      // Buat collection reminders jika belum ada
+      result += 'Mencoba membuat collection reminders...\n';
+      try {
+        // Cek apakah koleksi reminders sudah ada
+        try {
+          await appwrite.databases.listDocuments(
+            databaseId: databaseId,
+            collectionId: remindersCollectionId,
+            queries: [Query.limit(1)],
+          );
+          result += 'Collection reminders sudah ada, melanjutkan...\n';
+        } catch (e) {
+          if (e.toString().contains('Collection not found')) {
+            result +=
+                'Collection reminders tidak ditemukan. Silakan buat collection melalui Appwrite Console.\n';
+            result += 'Nama collection: $remindersCollectionId\n';
+            result += 'Atribut yang diperlukan:\n';
+            result += '- reminder_id (string, required)\n';
+            result += '- user_id (string, required)\n';
+            result += '- laptop_id (string, required)\n';
+            result += '- task_id (string, required)\n';
+            result += '- scheduled_date (string, required)\n';
+            result += '- frequency (string, required)\n';
+            result += '- status (string, required)\n';
+            result += '- created_at (string)\n';
+            result += '- updated_at (string)\n';
+          } else {
+            result += 'Error saat memeriksa collection reminders: $e\n';
+          }
+        }
+      } catch (e) {
+        result += 'Error saat memeriksa collection reminders: $e\n';
+      }
+
+      // Buat collection maintenance_history jika belum ada
+      result += 'Mencoba membuat collection maintenance_history...\n';
+      try {
+        // Cek apakah koleksi maintenance_history sudah ada
+        try {
+          await appwrite.databases.listDocuments(
+            databaseId: databaseId,
+            collectionId: historyCollectionId,
+            queries: [Query.limit(1)],
+          );
+          result +=
+              'Collection maintenance_history sudah ada, melanjutkan...\n';
+        } catch (e) {
+          if (e.toString().contains('Collection not found')) {
+            result +=
+                'Collection maintenance_history tidak ditemukan. Silakan buat collection melalui Appwrite Console.\n';
+            result += 'Nama collection: $historyCollectionId\n';
+            result += 'Atribut yang diperlukan:\n';
+            result += '- history_id (string, required)\n';
+            result += '- user_id (string, required)\n';
+            result += '- laptop_id (string, required)\n';
+            result += '- task_id (string, required)\n';
+            result += '- completion_date (string, required)\n';
+            result += '- notes (string)\n';
+            result += '- created_at (string)\n';
+          } else {
+            result +=
+                'Error saat memeriksa collection maintenance_history: $e\n';
+          }
+        }
+      } catch (e) {
+        result += 'Error saat memeriksa collection maintenance_history: $e\n';
       }
 
       // Buat data sample jika koleksi sudah ada

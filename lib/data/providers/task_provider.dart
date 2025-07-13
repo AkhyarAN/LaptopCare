@@ -130,6 +130,10 @@ class TaskProvider with ChangeNotifier {
     _clearError();
 
     try {
+      debugPrint('TaskProvider.completeTask: Starting task completion...');
+      debugPrint(
+          'TaskProvider.completeTask: userId=$userId, laptopId=$laptopId, taskId=$taskId');
+
       final history = await _appwriteService.recordMaintenanceHistory(
         userId: userId,
         laptopId: laptopId,
@@ -139,10 +143,15 @@ class TaskProvider with ChangeNotifier {
       );
 
       _history.add(history);
+      debugPrint(
+          'TaskProvider.completeTask: Maintenance history recorded successfully with ID: ${history.historyId}');
+      debugPrint(
+          'TaskProvider.completeTask: Total history records: ${_history.length}');
       notifyListeners();
 
       return true;
     } catch (e) {
+      debugPrint('TaskProvider.completeTask: ERROR - $e');
       _setError(e.toString());
       return false;
     } finally {
@@ -218,6 +227,28 @@ class TaskProvider with ChangeNotifier {
 
   void _clearError() {
     _error = null;
+  }
+
+  /// Clear semua data task (untuk logout atau ganti user)
+  void clearData() {
+    debugPrint('TaskProvider.clearData: Membersihkan semua data task');
+
+    // Only notify if there's actually data to clear
+    final hasData = _tasks.isNotEmpty ||
+        _history.isNotEmpty ||
+        _selectedCategory != null ||
+        _error != null ||
+        _isLoading;
+
+    _tasks.clear();
+    _history.clear();
+    _selectedCategory = null;
+    _error = null;
+    _isLoading = false;
+
+    if (hasData) {
+      notifyListeners();
+    }
   }
 
   Future<void> loadTasks(String userId,

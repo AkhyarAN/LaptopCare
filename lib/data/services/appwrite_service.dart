@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as Models;
 import 'package:flutter/foundation.dart';
@@ -117,47 +118,21 @@ class AppwriteService {
   // Database initialization and connectivity check
   Future<void> initializeDatabase() async {
     try {
-      // Check if project exists by trying to get current user
-      try {
-        await account.get();
-        debugPrint('Project exists and is accessible');
-      } catch (e) {
-        debugPrint('Error accessing project: $e');
-        // Check if this is an authentication error (which is expected if not logged in)
-        if (e.toString().contains('Unauthorized') ||
-            e.toString().contains('401')) {
-          debugPrint('Authentication error - this is normal if not logged in');
-          // Continue execution instead of throwing an exception
-        } else if (e.toString().contains('project_not_found')) {
-          throw Exception(
-              'Project not found. Please verify the project ID: $projectId is correct.');
-        } else {
-          // For other errors, continue but log them
-          debugPrint('Continuing despite error: $e');
-        }
-      }
+      debugPrint('🔍 Checking database connectivity...');
 
-      // Try to check if database exists by listing documents in a collection
-      try {
-        // Try to list documents in users collection
-        await databases.listDocuments(
-          databaseId: databaseId,
-          collectionId: usersCollectionId,
-        );
-        debugPrint('Database and collections exist');
-      } catch (e) {
-        if (e.toString().contains('database_not_found')) {
-          throw Exception(
-              'Database not found. Please run the appwrite_setup script to create the database and collections.');
-        } else if (e.toString().contains('collection_not_found')) {
-          throw Exception(
-              'Collections not found. Please run the appwrite_setup script to create the collections.');
-        } else {
-          debugPrint('Error checking database: $e');
-        }
+      // Don't check account.get() as it requires authentication
+      // Just check if database and collections exist
+      final databaseExists = await checkDatabaseExists();
+
+      if (databaseExists) {
+        debugPrint('✅ Database and collections exist');
+      } else {
+        debugPrint('⚠️ Database or collections not found');
+        throw Exception(
+            'Database not found. Please run the appwrite_setup script to create the database and collections.');
       }
     } catch (e) {
-      debugPrint('Error initializing database: $e');
+      debugPrint('❌ Error initializing database: $e');
       rethrow;
     }
   }
@@ -199,34 +174,56 @@ class AppwriteService {
   /// Memeriksa apakah database sudah ada
   Future<bool> checkDatabaseExists() async {
     try {
-      // Coba list documents di collection apapun untuk memeriksa apakah database ada
-      try {
-        await databases.listDocuments(
-          databaseId: databaseId,
-          collectionId: usersCollectionId,
-          queries: [Query.limit(1)],
-        );
-        return true;
-      } catch (e) {
-        if (e.toString().contains('Database not found')) {
-          return false;
-        }
-        // Jika error bukan karena database tidak ditemukan, coba collection lain
+      debugPrint('🔍 Checking database existence...');
+
+      // Try different collections to check database existence
+      final collectionsToCheck = [
+        guidesCollectionId, // Try guides first (might have public read)
+        laptopsCollectionId, // Then laptops
+        tasksCollectionId, // Then tasks
+        usersCollectionId, // Users last (most likely to need auth)
+      ];
+
+      for (String collectionId in collectionsToCheck) {
         try {
+          debugPrint('🔍 Trying collection: $collectionId');
           await databases.listDocuments(
             databaseId: databaseId,
-            collectionId: laptopsCollectionId,
+            collectionId: collectionId,
             queries: [Query.limit(1)],
           );
+          debugPrint(
+              '✅ Database exists - confirmed via collection: $collectionId');
           return true;
         } catch (e) {
-          if (e.toString().contains('Database not found')) {
+          debugPrint('⚠️ Error checking $collectionId: $e');
+
+          // If it's a database/project not found error, definitely false
+          if (e.toString().contains('database_not_found') ||
+              e.toString().contains('Database not found') ||
+              e.toString().contains('project_not_found')) {
+            debugPrint('❌ Database definitely does not exist');
             return false;
           }
-          return false;
+
+          // If it's a permission/scope error, database might exist but we can't access
+          // Try the next collection
+          if (e.toString().contains('unauthorized') ||
+              e.toString().contains('missing scope') ||
+              e.toString().contains('collection_not_found')) {
+            debugPrint(
+                '🔄 Permission issue with $collectionId, trying next...');
+            continue;
+          }
         }
       }
+
+      // If we've tried all collections and got permission errors,
+      // assume database exists but we don't have proper access yet
+      debugPrint('⚠️ Could not confirm database existence due to permissions');
+      return false;
     } catch (e) {
+      debugPrint('❌ General error checking database: $e');
       return false;
     }
   }
@@ -263,20 +260,41 @@ class AppwriteService {
         name: name,
       );
 
-      // Create user profile in database
-      await databases.createDocument(
-        databaseId: databaseId,
-        collectionId: usersCollectionId,
-        documentId: user.$id,
-        data: {
-          'user_id': user.$id,
-          'email': email,
-          'name': name ?? '',
-          'created_at': DateTime.now().toIso8601String(),
-          'theme': 'light',
-          'notifications_enabled': true,
-        },
-      );
+      // Create user profile in database with error handling
+      try {
+        // Cek apakah user sudah ada di database
+        try {
+          final existingUser = await databases.getDocument(
+            databaseId: databaseId,
+            collectionId: usersCollectionId,
+            documentId: user.$id,
+          );
+
+          // Jika user sudah ada, tidak perlu membuat lagi
+          debugPrint(
+              'User profile dengan ID ${user.$id} sudah ada di database');
+        } catch (e) {
+          // Jika user belum ada (error document_not_found), buat user baru
+          debugPrint('Membuat user profile baru untuk ID ${user.$id}');
+
+          await databases.createDocument(
+            databaseId: databaseId,
+            collectionId: usersCollectionId,
+            documentId: user.$id,
+            data: {
+              'user_id': user.$id,
+              'email': email,
+              'name': name ?? '',
+              'created_at': DateTime.now().toIso8601String(),
+              'theme': 'light',
+              'notifications_enabled': true,
+            },
+          );
+        }
+      } catch (e) {
+        debugPrint('Error saat membuat/memeriksa user profile: $e');
+        // Tetap lanjutkan karena user Appwrite sudah terbuat
+      }
 
       return user;
     } catch (e) {
@@ -363,24 +381,32 @@ class AppwriteService {
     debugPrint('Database ID: $databaseId, Collection ID: $laptopsCollectionId');
 
     try {
+      // Validasi input data terlebih dahulu
+      if (name.trim().isEmpty) {
+        throw Exception('Nama laptop tidak boleh kosong');
+      }
+
+      // Cek apakah database dan collection sudah ada
+      await _ensureDatabaseAndCollectionExist();
+
       // Coba buat dokumen laptop baru
       final laptopId = const Uuid().v4();
       final now = DateTime.now();
       debugPrint('Membuat laptop dengan ID: $laptopId');
 
-      // Siapkan data
+      // Siapkan data dengan validasi
       final Map<String, dynamic> data = {
         'laptop_id': laptopId,
         'user_id': userId,
-        'name': name,
-        'brand': brand ?? '',
-        'model': model ?? '',
+        'name': name.trim(),
+        'brand': (brand ?? '').trim(),
+        'model': (model ?? '').trim(),
         'purchase_date': purchaseDate?.toIso8601String() ?? '',
-        'os': os ?? '',
-        'ram': ram ?? '',
-        'storage': storage ?? '',
-        'cpu': cpu ?? '',
-        'gpu': gpu ?? '',
+        'os': (os ?? '').trim(),
+        'ram': (ram ?? '').trim(),
+        'storage': (storage ?? '').trim(),
+        'cpu': (cpu ?? '').trim(),
+        'gpu': (gpu ?? '').trim(),
         'image_id': imageId ?? '',
         'created_at': now.toIso8601String(),
         'updated_at': now.toIso8601String(),
@@ -388,17 +414,23 @@ class AppwriteService {
 
       debugPrint('Data yang akan disimpan: $data');
 
-      // Buat dokumen
+      // Buat dokumen dengan timeout
       final result = await databases.createDocument(
         databaseId: databaseId,
         collectionId: laptopsCollectionId,
         documentId: ID.unique(),
         data: data,
         permissions: [
-          Permission.read(Role.user(userId)),
-          Permission.update(Role.user(userId)),
-          Permission.delete(Role.user(userId)),
+          Permission.read(Role.any()),
+          Permission.write(Role.any()),
+          Permission.update(Role.any()),
+          Permission.delete(Role.any()),
         ],
+      ).timeout(
+        const Duration(seconds: 20),
+        onTimeout: () {
+          throw Exception('Timeout: Koneksi ke database terlalu lama');
+        },
       );
 
       debugPrint('Dokumen berhasil dibuat dengan ID: ${result.$id}');
@@ -407,15 +439,15 @@ class AppwriteService {
       return Laptop(
         laptopId: laptopId,
         userId: userId,
-        name: name,
-        brand: brand ?? '',
-        model: model ?? '',
+        name: name.trim(),
+        brand: (brand ?? '').trim(),
+        model: (model ?? '').trim(),
         purchaseDate: purchaseDate,
-        os: os ?? '',
-        ram: ram ?? '',
-        storage: storage ?? '',
-        cpu: cpu ?? '',
-        gpu: gpu ?? '',
+        os: (os ?? '').trim(),
+        ram: (ram ?? '').trim(),
+        storage: (storage ?? '').trim(),
+        cpu: (cpu ?? '').trim(),
+        gpu: (gpu ?? '').trim(),
         imageId: imageId,
         createdAt: now,
         updatedAt: now,
@@ -423,14 +455,65 @@ class AppwriteService {
     } catch (e) {
       debugPrint('Error saat membuat laptop: $e');
 
-      // Log error detail
-      if (e.toString().contains('Permission denied')) {
-        debugPrint('ERROR IZIN: Pastikan koleksi memiliki izin yang benar');
+      // Provide more specific error messages
+      String errorMessage = e.toString();
+      if (e.toString().contains('user_unauthorized') ||
+          e.toString().contains('Permission denied')) {
+        errorMessage =
+            'Permission error: Collection laptops belum dikonfigurasi dengan benar. Silakan setup database terlebih dahulu.';
+        debugPrint('ERROR PERMISSION: Collection permission tidak sesuai');
       } else if (e.toString().contains('collection_not_found')) {
+        errorMessage = 'Collection not found: Koleksi laptops tidak ditemukan';
         debugPrint('ERROR KOLEKSI: Koleksi laptops tidak ditemukan');
-        debugPrint('Coba jalankan script update_permissions.ps1');
+      } else if (e.toString().contains('database_not_found')) {
+        errorMessage = 'Database not found: Database tidak ditemukan';
+        debugPrint('ERROR DATABASE: Database tidak ditemukan');
+      } else if (e.toString().contains('project_not_found')) {
+        errorMessage = 'Project not found: Project ID tidak valid';
+        debugPrint('ERROR PROJECT: Project ID tidak valid');
+      } else if (e.toString().contains('Timeout')) {
+        errorMessage = 'Timeout: Koneksi ke server terlalu lama';
+        debugPrint('ERROR TIMEOUT: Koneksi terlalu lama');
       }
 
+      // Throw dengan pesan error yang lebih jelas
+      throw Exception(errorMessage);
+    }
+  }
+
+  /// Memastikan database dan collection sudah ada
+  Future<void> _ensureDatabaseAndCollectionExist() async {
+    debugPrint('Memeriksa eksistensi database dan collection...');
+
+    try {
+      // Test dengan mencoba list documents
+      await databases.listDocuments(
+        databaseId: databaseId,
+        collectionId: laptopsCollectionId,
+        queries: [Query.limit(1)],
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Database check timeout');
+        },
+      );
+
+      debugPrint('Database dan collection sudah ada');
+    } catch (e) {
+      debugPrint('Error checking database: $e');
+
+      if (e.toString().contains('database_not_found')) {
+        throw Exception(
+            'Database belum dibuat. Silakan buat database dengan ID: $databaseId di Appwrite Console atau jalankan setup script.');
+      } else if (e.toString().contains('collection_not_found')) {
+        throw Exception(
+            'Collection laptops belum dibuat. Silakan buat collection dengan ID: $laptopsCollectionId di Appwrite Console atau jalankan setup script.');
+      } else if (e.toString().contains('project_not_found')) {
+        throw Exception(
+            'Project tidak ditemukan. Periksa Project ID: $projectId di constant/appwrite.dart');
+      }
+
+      // Untuk error lainnya, re-throw
       rethrow;
     }
   }
@@ -455,13 +538,20 @@ class AppwriteService {
 
   Future<Laptop> getLaptop(String laptopId) async {
     try {
-      final document = await databases.getDocument(
+      // Cari document berdasarkan laptop_id karena document ID dan laptop_id berbeda
+      final documents = await databases.listDocuments(
         databaseId: databaseId,
         collectionId: laptopsCollectionId,
-        documentId: laptopId,
+        queries: [
+          Query.equal('laptop_id', laptopId),
+        ],
       );
 
-      return Laptop.fromJson(document.data);
+      if (documents.documents.isEmpty) {
+        throw Exception('Laptop dengan ID $laptopId tidak ditemukan');
+      }
+
+      return Laptop.fromJson(documents.documents.first.data);
     } catch (e) {
       rethrow;
     }
@@ -469,28 +559,65 @@ class AppwriteService {
 
   Future<Laptop> updateLaptop(Laptop laptop) async {
     try {
+      debugPrint(
+          'updateLaptop: Looking for laptop with laptopId: ${laptop.laptopId}');
+
+      // Cari document berdasarkan laptop_id karena document ID dan laptop_id berbeda
+      final documents = await databases.listDocuments(
+        databaseId: databaseId,
+        collectionId: laptopsCollectionId,
+        queries: [
+          Query.equal('laptop_id', laptop.laptopId),
+        ],
+      );
+
+      if (documents.documents.isEmpty) {
+        throw Exception(
+            'Laptop dengan ID ${laptop.laptopId} tidak ditemukan untuk update');
+      }
+
+      final documentId = documents.documents.first.$id;
+      debugPrint('updateLaptop: Found document with ID: $documentId');
+
+      // Update document menggunakan document ID dari Appwrite
       final document = await databases.updateDocument(
         databaseId: databaseId,
         collectionId: laptopsCollectionId,
-        documentId: laptop.laptopId,
+        documentId: documentId,
         data: {
           ...laptop.toJson(),
           'updated_at': DateTime.now().toIso8601String(),
         },
       );
 
+      debugPrint('updateLaptop: Successfully updated laptop');
       return Laptop.fromJson(document.data);
     } catch (e) {
+      debugPrint('updateLaptop: Error - $e');
       rethrow;
     }
   }
 
   Future<void> deleteLaptop(String laptopId) async {
     try {
+      // Cari document berdasarkan laptop_id karena document ID dan laptop_id berbeda
+      final documents = await databases.listDocuments(
+        databaseId: databaseId,
+        collectionId: laptopsCollectionId,
+        queries: [
+          Query.equal('laptop_id', laptopId),
+        ],
+      );
+
+      if (documents.documents.isEmpty) {
+        throw Exception('Laptop dengan ID $laptopId tidak ditemukan');
+      }
+
+      // Hapus document menggunakan document ID dari Appwrite
       await databases.deleteDocument(
         databaseId: databaseId,
         collectionId: laptopsCollectionId,
-        documentId: laptopId,
+        documentId: documents.documents.first.$id,
       );
     } catch (e) {
       rethrow;
@@ -762,6 +889,33 @@ class AppwriteService {
     }
   }
 
+  Future<Reminder> updateReminder({
+    required String reminderId,
+    required String taskId,
+    required DateTime scheduledDate,
+    required TaskFrequency frequency,
+    required ReminderStatus status,
+  }) async {
+    try {
+      final document = await databases.updateDocument(
+        databaseId: databaseId,
+        collectionId: remindersCollectionId,
+        documentId: reminderId,
+        data: {
+          'task_id': taskId,
+          'scheduled_date': scheduledDate.toIso8601String(),
+          'frequency': frequency.value,
+          'status': status.value,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+      );
+
+      return Reminder.fromJson(document.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Guide methods
   Future<List<Guide>> getGuides({
     TaskCategory? category,
@@ -821,22 +975,46 @@ class AppwriteService {
           bytes: fileBytes,
           filename: fileName,
         ),
+        permissions: [
+          Permission.read(Role.any()),
+          Permission.write(Role.any()),
+          Permission.update(Role.any()),
+          Permission.delete(Role.any()),
+        ],
       );
     } catch (e) {
-      rethrow;
+      debugPrint('Error uploading image: $e');
+
+      // Provide user-friendly error messages
+      String errorMessage = e.toString();
+      if (e.toString().contains('user_unauthorized') ||
+          e.toString().contains('401')) {
+        errorMessage =
+            'Storage permission error: Please setup storage bucket with proper permissions in Appwrite console.';
+      } else if (e.toString().contains('bucket_not_found')) {
+        errorMessage =
+            'Storage bucket not found: Please create storage bucket "$storageId" in Appwrite console.';
+      } else if (e.toString().contains('project_not_found')) {
+        errorMessage = 'Project not found: Please check project configuration.';
+      }
+
+      throw Exception(errorMessage);
     }
   }
 
   Future<String> getImageUrl(String fileId) async {
     try {
-      // Create a view URL for the file
-      return storage
-          .getFileView(
-            bucketId: storageId,
-            fileId: fileId,
-          )
-          .toString();
+      debugPrint('getImageUrl: Getting URL for fileId: $fileId');
+
+      // Construct the public file view URL manually
+      // Format: https://[ENDPOINT]/v1/storage/buckets/[BUCKET_ID]/files/[FILE_ID]/view?project=[PROJECT_ID]
+      final url =
+          '$endpoint/storage/buckets/$storageId/files/$fileId/view?project=$projectId';
+
+      debugPrint('getImageUrl: Generated URL: $url');
+      return url;
     } catch (e) {
+      debugPrint('getImageUrl: Error - $e');
       rethrow;
     }
   }
@@ -870,21 +1048,39 @@ class AppwriteService {
     required String name,
   }) async {
     try {
-      return await databases.createDocument(
-        databaseId: databaseId,
-        collectionId: usersCollectionId,
-        documentId: userId,
-        data: {
-          'user_id': userId,
-          'email': email,
-          'name': name,
-          'created_at': DateTime.now().toIso8601String(),
-          'last_login': DateTime.now().toIso8601String(),
-          'theme': 'light',
-          'notifications_enabled': true,
-        },
-      );
+      // Cek apakah user sudah ada di database
+      try {
+        final existingUser = await databases.getDocument(
+          databaseId: databaseId,
+          collectionId: usersCollectionId,
+          documentId: userId,
+        );
+
+        // Jika user sudah ada, kembalikan dokumen yang sudah ada
+        debugPrint(
+            'User dengan ID $userId sudah ada, mengembalikan dokumen yang sudah ada');
+        return existingUser;
+      } catch (e) {
+        // Jika user belum ada (error document_not_found), buat user baru
+        debugPrint('User dengan ID $userId belum ada, membuat user baru');
+
+        return await databases.createDocument(
+          databaseId: databaseId,
+          collectionId: usersCollectionId,
+          documentId: userId,
+          data: {
+            'user_id': userId,
+            'email': email,
+            'name': name,
+            'created_at': DateTime.now().toIso8601String(),
+            'last_login': DateTime.now().toIso8601String(),
+            'theme': 'light',
+            'notifications_enabled': true,
+          },
+        );
+      }
     } catch (e) {
+      debugPrint('Error saat membuat/mendapatkan user: $e');
       rethrow;
     }
   }

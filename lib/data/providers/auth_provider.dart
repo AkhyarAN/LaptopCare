@@ -17,17 +17,142 @@ class AuthProvider with ChangeNotifier {
   Models.User? get appwriteUser => _appwriteUser;
   bool get isLoggedIn => _appwriteUser != null;
 
+  /// Convert technical errors to user-friendly Indonesian messages
+  String _parseAuthError(dynamic error) {
+    final errorString = error.toString().toLowerCase();
+
+    // Credential errors
+    if (errorString.contains('user_invalid_credentials') ||
+        errorString.contains('invalid credentials')) {
+      return 'Email atau password tidak cocok. Silakan periksa kembali.';
+    }
+
+    // Registration errors
+    if (errorString.contains('user_email_already_exists') ||
+        errorString.contains('email already exists')) {
+      return 'Email sudah terdaftar. Silakan gunakan email lain atau login.';
+    }
+
+    // Password errors
+    if (errorString.contains('user_password_mismatch') ||
+        errorString.contains('password mismatch')) {
+      return 'Password yang dimasukkan salah.';
+    }
+
+    if (errorString.contains('password_policy_violation') ||
+        errorString.contains('password too weak') ||
+        errorString.contains('weak password')) {
+      return 'Password terlalu lemah. Gunakan minimal 8 karakter dengan kombinasi huruf, angka, dan simbol.';
+    }
+
+    // Email errors
+    if (errorString.contains('user_email_not_whitelisted') ||
+        errorString.contains('email not found') ||
+        errorString.contains('user not found')) {
+      return 'Email tidak ditemukan. Silakan daftar terlebih dahulu.';
+    }
+
+    if (errorString.contains('invalid_email') ||
+        errorString.contains('email invalid') ||
+        errorString.contains('malformed email')) {
+      return 'Format email tidak valid. Contoh: nama@domain.com';
+    }
+
+    // Rate limiting
+    if (errorString.contains('rate limit') ||
+        errorString.contains('too many requests') ||
+        errorString.contains('429')) {
+      return 'Terlalu banyak percobaan. Silakan coba lagi dalam beberapa menit.';
+    }
+
+    // Network errors
+    if (errorString.contains('network') ||
+        errorString.contains('connection') ||
+        errorString.contains('timeout') ||
+        errorString.contains('unreachable')) {
+      return 'Koneksi internet bermasalah. Silakan periksa koneksi Anda.';
+    }
+
+    // Session errors
+    if (errorString.contains('session_already_exists') ||
+        errorString.contains('session exists')) {
+      return 'Sesi masih aktif. Silakan coba login lagi.';
+    }
+
+    if (errorString.contains('session_invalid') ||
+        errorString.contains('invalid session') ||
+        errorString.contains('session expired')) {
+      return 'Sesi telah berakhir. Silakan login kembali.';
+    }
+
+    // Specific password policy errors
+    if (errorString.contains('password_recently_used')) {
+      return 'Password baru tidak boleh sama dengan password sebelumnya.';
+    }
+
+    if (errorString.contains('password_personal_data')) {
+      return 'Password tidak boleh mengandung informasi pribadi.';
+    }
+
+    if (errorString.contains('password_history')) {
+      return 'Password sudah pernah digunakan sebelumnya.';
+    }
+
+    // Server errors
+    if (errorString.contains('500') || errorString.contains('server error')) {
+      return 'Server sedang bermasalah. Silakan coba lagi nanti.';
+    }
+
+    if (errorString.contains('503') ||
+        errorString.contains('service unavailable')) {
+      return 'Layanan sedang dalam pemeliharaan. Silakan coba lagi nanti.';
+    }
+
+    // Default fallback for unknown errors
+    return 'Terjadi kesalahan. Silakan coba lagi atau hubungi dukungan.';
+  }
+
   Future<void> checkAuthStatus() async {
     _setLoading(true);
+    _error = null; // Clear any previous errors
+
     try {
+      debugPrint('🔍 Checking authentication status...');
       _appwriteUser = await _appwriteService.getCurrentUser();
 
       if (_appwriteUser != null) {
-        _currentUser =
-            await _appwriteService.getUserProfile(_appwriteUser!.$id);
+        debugPrint('✅ User is authenticated: ${_appwriteUser!.$id}');
+        try {
+          _currentUser =
+              await _appwriteService.getUserProfile(_appwriteUser!.$id);
+          debugPrint('✅ User profile loaded successfully');
+        } catch (profileError) {
+          debugPrint('⚠️ Could not load user profile: $profileError');
+          // Keep the Appwrite user but clear the profile
+          _currentUser = null;
+        }
+      } else {
+        debugPrint('📝 No authenticated user found');
+        _currentUser = null;
       }
     } catch (e) {
-      _setError(e.toString());
+      debugPrint('🔍 Auth check error: $e');
+
+      // Handle scope/authentication errors gracefully
+      final errorString = e.toString().toLowerCase();
+      if (errorString.contains('general_unauthorized_scope') ||
+          errorString.contains('missing scope') ||
+          errorString.contains('unauthorized') ||
+          errorString.contains('401')) {
+        debugPrint('📝 User not authenticated (this is normal)');
+        // Clear user data without setting error
+        _appwriteUser = null;
+        _currentUser = null;
+      } else {
+        // Only set error for actual problems (not authentication issues)
+        debugPrint('❌ Actual error during auth check: $e');
+        _setError(_parseAuthError(e));
+      }
     } finally {
       _setLoading(false);
     }
@@ -108,15 +233,15 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } catch (e) {
-        _error = 'Login gagal: ${e.toString()}';
-        debugPrint(_error);
+        _error = _parseAuthError(e);
+        debugPrint('Login error: ${e.toString()}');
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _error = 'Terjadi kesalahan: ${e.toString()}';
-      debugPrint(_error);
+      _error = _parseAuthError(e);
+      debugPrint('Login wrapper error: ${e.toString()}');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -167,7 +292,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = _parseAuthError(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -180,10 +305,15 @@ class AuthProvider with ChangeNotifier {
 
     try {
       await _appwriteService.logout();
+
+      // Clear user data
+      final previousUserId = _currentUser?.id;
       _currentUser = null;
       _appwriteUser = null;
+
+      debugPrint('Logout berhasil untuk user: $previousUserId');
     } catch (e) {
-      _error = e.toString();
+      _error = _parseAuthError(e);
     }
 
     _isLoading = false;
@@ -237,7 +367,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = _parseAuthError(e);
       _isLoading = false;
       notifyListeners();
       return false;

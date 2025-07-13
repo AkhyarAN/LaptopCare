@@ -4,11 +4,20 @@ Aplikasi Flutter untuk membantu pengguna melacak dan mengelola pemeliharaan lapt
 
 ## Fitur
 
-- Manajemen beberapa laptop
-- Penjadwalan tugas pemeliharaan
-- Pengingat pemeliharaan
-- Pelacakan riwayat pemeliharaan
-- Panduan pemeliharaan
+### Fitur Utama
+- **Manajemen Laptop**: Kelola profil multiple laptop dengan foto dan spesifikasi lengkap
+- **Tugas Pemeliharaan**: Penjadwalan dan tracking tugas perawatan berdasarkan kategori
+- **Sistem Pengingat**: Notifikasi otomatis untuk tugas pemeliharaan yang akan datang
+- **Panduan Perawatan**: Koleksi panduan komprehensif untuk semua aspek perawatan laptop
+- **Statistik & Riwayat**: Analytics dan visualisasi data pemeliharaan
+- **Dark/Light Theme**: Switch tema sesuai preferensi pengguna
+
+### Fitur Lanjutan (Iterasi 4)
+- **Panduan Perawatan Komprehensif**: 10+ panduan detail untuk Physical, Software, Security & Performance
+- **Filter & Search**: Cari dan filter panduan berdasarkan kategori, kesulitan, dan status premium
+- **Statistik Dashboard**: Overview pemeliharaan dengan metrics bulanan dan mingguan
+- **Export Capabilities**: Export data riwayat (fitur premium)
+- **Premium Content**: Panduan advanced untuk users premium
 
 ## Persyaratan
 
@@ -78,6 +87,63 @@ Script akan:
    flutter run
    ```
 
+## Setup Panduan Perawatan (Iterasi 4)
+
+Setelah aplikasi berjalan, untuk mendapatkan akses ke panduan perawatan komprehensif:
+
+1. **Login** ke aplikasi dengan akun Anda
+2. **Navigasi** ke tab "Profile" (ikon person di bottom navigation)
+3. **Scroll** ke bagian "Setup Panduan"
+4. **Klik** tombol "Setup Panduan Database"
+5. **Tunggu** proses seeding selesai (akan muncul notifikasi sukses)
+6. **Navigasi** ke tab "Panduan" untuk melihat semua panduan yang tersedia
+
+### Panduan yang Tersedia
+
+**Physical Maintenance (3 panduan):**
+- Cara Membersihkan Layar Laptop (Easy, 10 menit)
+- Membersihkan Keyboard dan Touchpad (Easy, 15 menit)
+- Membersihkan Ventilasi dan Fan Laptop (Advanced, 45 menit) *Premium*
+
+**Software Maintenance (2 panduan):**
+- Cara Melakukan Disk Cleanup (Easy, 20 menit)
+- Update Driver dan Software (Medium, 30 menit)
+
+**Security (2 panduan):**
+- Scan Virus dan Malware (Medium, 60 menit)
+- Backup Data Penting (Medium, 45 menit) *Premium*
+
+**Performance (3 panduan):**
+- Optimasi Startup Programs (Easy, 15 menit)
+- Defragmentasi Hard Drive (Medium, 180 menit) *Premium*
+- Monitor Temperature dan Performance (Medium, 25 menit)
+
+### Fitur Panduan
+
+- **Search & Filter**: Cari panduan berdasarkan keyword, filter berdasarkan kategori, tingkat kesulitan
+- **Detailed Content**: Setiap panduan memiliki langkah-langkah detail dengan tips dan peringatan
+- **Difficulty Levels**: Easy (hijau), Medium (orange), Advanced (merah)
+- **Time Estimates**: Estimasi waktu pengerjaan untuk setiap panduan
+- **Premium Content**: Beberapa panduan advanced memerlukan upgrade premium
+- **Copy & Share**: Copy panduan ke clipboard atau share (fitur akan datang)
+
+## Menggunakan Statistik & Riwayat
+
+Tab "Statistik" menyediakan:
+
+- **Overview Cards**: Total perawatan, perawatan bulan ini, minggu ini, dan jumlah laptop aktif
+- **Breakdown per Laptop**: Statistik perawatan untuk setiap laptop
+- **Riwayat Terkini**: 10 aktivitas perawatan terakhir
+- **Filter Riwayat**: Filter berdasarkan laptop dan rentang tanggal
+
+### Tips Menggunakan Aplikasi
+
+1. **Setup Database**: Pastikan menggunakan tombol "Setup Database" di Profile jika ada error permissions
+2. **Populate Guides**: Jalankan "Setup Panduan Database" untuk mendapatkan panduan lengkap
+3. **Dark Theme**: Toggle theme di Profile Settings untuk kenyamanan mata
+4. **Notifications**: Aktifkan notifikasi dan gunakan debug tools jika ada masalah
+5. **Multiple Laptops**: Tambahkan semua laptop Anda untuk tracking yang komprehensif
+
 ## Struktur Koleksi Database
 
 ### Koleksi Users
@@ -134,6 +200,17 @@ Script akan:
 - `status` (String): Status pengingat (pending, completed, dismissed)
 - `frequency` (String): Frekuensi pengingat
 - `scheduled_date` (DateTime): Tanggal terjadwal
+- `created_at` (DateTime): Waktu pembuatan
+- `updated_at` (DateTime): Waktu pembaruan terakhir
+
+### Koleksi Guides (Iterasi 4)
+- `guide_id` (String): ID panduan
+- `category` (String): Kategori panduan (physical, software, security, performance)
+- `title` (String): Judul panduan
+- `content` (String): Konten lengkap panduan
+- `difficulty` (String): Tingkat kesulitan (easy, medium, advanced)
+- `estimated_time` (Integer): Estimasi waktu dalam menit
+- `is_premium` (Boolean): Status konten premium
 - `created_at` (DateTime): Waktu pembuatan
 - `updated_at` (DateTime): Waktu pembaruan terakhir
 
